@@ -9,6 +9,8 @@ set -euo pipefail
 
 PROJECT_ID="cf284212-7e0b-4561-8312-8aa1bc3e4664"
 ENV_ID="ff60f790-8497-4a9b-85ae-46a524b917b8"
+SERVICE_ID="96c2aa52-1976-4eab-883f-4bc5fdd2d8e8"
+PUBLIC_BASE_URL="https://graphifygpts-production.up.railway.app"
 GQL="https://backboard.railway.app/graphql/v2"
 
 # Fresh tokens
@@ -29,20 +31,23 @@ print(json.dumps({
   'variables': {'input': {
     'projectId': '$PROJECT_ID',
     'environmentId': '$ENV_ID',
+    'serviceId': '$SERVICE_ID',
     'name': '$name',
     'value': '''$value'''
   }}
 }))")" > /dev/null
 }
 
-echo "[1/2] Setting 7 variables…"
-upsert GRAPHIFY_AUTH_MODE       bearer
-upsert GRAPHIFY_ACTION_TOKEN    "$ACTION_TOKEN"
-upsert GRAPHIFY_URL_SECRET      "$URL_SECRET"
+echo "[1/2] Setting 9 service-level variables…"
+upsert GRAPHIFY_AUTH_MODE        bearer
+upsert GRAPHIFY_ACTION_TOKEN     "$ACTION_TOKEN"
+upsert GRAPHIFY_URL_SECRET       "$URL_SECRET"
 upsert GRAPHIFY_ALLOW_LOCAL_PATH false
 upsert GRAPHIFY_MAX_FILES        20000
 upsert GRAPHIFY_MAX_TOTAL_BYTES  524288000
 upsert GRAPHIFY_URL_TTL_SECONDS  3600
+upsert PORT                      8000
+upsert GRAPHIFY_PUBLIC_BASE_URL  "$PUBLIC_BASE_URL"
 
 echo "[2/2] Reading service domain…"
 DOMAIN=$(curl -sS -X POST "$GQL" \

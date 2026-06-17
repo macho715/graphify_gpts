@@ -28,15 +28,6 @@ paths:
     post:
       summary: Graphify Build
       operationId: graphifyBuild
-      parameters:
-      - name: authorization
-        in: header
-        required: false
-        schema:
-          anyOf:
-          - type: string
-          - type: 'null'
-          title: Authorization
       requestBody:
         required: true
         content:
@@ -67,14 +58,6 @@ paths:
         schema:
           type: string
           title: Job Id
-      - name: authorization
-        in: header
-        required: false
-        schema:
-          anyOf:
-          - type: string
-          - type: 'null'
-          title: Authorization
       responses:
         '200':
           description: Successful Response
@@ -98,14 +81,6 @@ paths:
         schema:
           type: string
           title: Job Id
-      - name: authorization
-        in: header
-        required: false
-        schema:
-          anyOf:
-          - type: string
-          - type: 'null'
-          title: Authorization
       responses:
         '200':
           description: Successful Response
@@ -130,14 +105,6 @@ paths:
         schema:
           type: string
           title: Graph Id
-      - name: authorization
-        in: header
-        required: false
-        schema:
-          anyOf:
-          - type: string
-          - type: 'null'
-          title: Authorization
       requestBody:
         required: true
         content:
@@ -168,14 +135,6 @@ paths:
         schema:
           type: string
           title: Graph Id
-      - name: authorization
-        in: header
-        required: false
-        schema:
-          anyOf:
-          - type: string
-          - type: 'null'
-          title: Authorization
       responses:
         '200':
           description: Successful Response
@@ -200,14 +159,6 @@ paths:
         schema:
           type: string
           title: Graph Id
-      - name: authorization
-        in: header
-        required: false
-        schema:
-          anyOf:
-          - type: string
-          - type: 'null'
-          title: Authorization
       requestBody:
         required: true
         content:
@@ -238,14 +189,6 @@ paths:
         schema:
           type: string
           title: Graph Id
-      - name: authorization
-        in: header
-        required: false
-        schema:
-          anyOf:
-          - type: string
-          - type: 'null'
-          title: Authorization
       requestBody:
         required: true
         content:
@@ -276,14 +219,6 @@ paths:
         schema:
           type: string
           title: Graph Id
-      - name: authorization
-        in: header
-        required: false
-        schema:
-          anyOf:
-          - type: string
-          - type: 'null'
-          title: Authorization
       requestBody:
         required: true
         content:
@@ -314,14 +249,6 @@ paths:
         schema:
           type: string
           title: Graph Id
-      - name: authorization
-        in: header
-        required: false
-        schema:
-          anyOf:
-          - type: string
-          - type: 'null'
-          title: Authorization
       requestBody:
         required: true
         content:
@@ -352,14 +279,6 @@ paths:
         schema:
           type: string
           title: Graph Id
-      - name: authorization
-        in: header
-        required: false
-        schema:
-          anyOf:
-          - type: string
-          - type: 'null'
-          title: Authorization
       requestBody:
         required: true
         content:
@@ -944,7 +863,7 @@ components:
       - type
       title: ValidationError
 servers:
-- url: https://YOUR-VERCEL-FACADE.vercel.app
-  description: Vercel facade or direct backend URL
+- url: https://YOUR-AUTH-NONE-BACKEND.example.com
+  description: Your self-hosted Auth=None backend. The live Railway backend uses Bearer — use 03_OPENAPI_ACTION_SCHEMA_BEARER.yaml for it.
 - url: http://localhost:8000
   description: Local development
