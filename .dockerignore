@@ -1,0 +1,56 @@
+# Limit Docker build context — only the active backend goes into the image.
+# The Dockerfile at graphify_full_stack_ready/backend/Dockerfile only references
+# its own requirements.txt and app/ tree, but Railway's build context is the
+# repo root, so this file prunes the rest.
+
+# Legacy / reference (not part of the running service)
+graphify_backend/
+graphify_gpts_pack/
+graphify_full_stack_ready/upstream_graphify_reference/
+graphify_full_stack_ready/docs/
+graphify_full_stack_ready/gpts/
+graphify_full_stack_ready/TEST_REPORT.md
+graphify_full_stack_ready/QUICK_START.md
+graphify_full_stack_ready/MANIFEST.txt
+graphify_full_stack_ready/README.md
+graphify_full_stack_ready/vercel_facade/
+
+# Top-level docs
+INTEGRATION.md
+README.md
+.gitignore
+.railwayignore
+.dockerignore
+
+# Test fixtures (only needed for local 5x smoke, not for the deployed service)
+graphify_full_stack_ready/backend/tests/
+
+# Secrets / runtime data — must never reach the image
+.env
+.env.*
+data/
+data_test/
+workspaces/
+artifacts/
+audit.log
+audit.jsonl
+*.log
+var/
+
+# Python / Node / VCS caches
+__pycache__/
+*.py[cod]
+*.pyo
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+node_modules/
+.next/
+.git/
+.gitignore
+.venv/
+venv/
+
+# OS
+.DS_Store
+Thumbs.db

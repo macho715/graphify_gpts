@@ -1,0 +1,13 @@
+# Root-level Railway config.
+# Points the build at the active backend in graphify_full_stack_ready/backend/.
+# The legacy graphify_backend/ and reference doc folders are excluded by .dockerignore.
+
+[build]
+builder = "DOCKERFILE"
+dockerfilePath = "graphify_full_stack_ready/backend/Dockerfile"
+
+[deploy]
+healthcheckPath = "/health"
+healthcheckTimeout = 30
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 3
