@@ -1,0 +1,5 @@
+# Replace graphify.example.com with your domain.
+graphify.example.com {
+    encode gzip
+    reverse_proxy graphify-backend:8000
+}

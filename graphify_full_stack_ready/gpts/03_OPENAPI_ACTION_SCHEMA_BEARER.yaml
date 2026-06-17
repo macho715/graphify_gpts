@@ -1,0 +1,974 @@
+openapi: 3.1.0
+info:
+  title: Graphify GPTS Backend
+  description: Graphify-style persistent knowledge graph backend for Custom GPT Actions.
+  version: 1.0.0
+paths:
+  /:
+    get:
+      summary: Root
+      operationId: root__get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+  /health:
+    get:
+      summary: Health
+      operationId: graphifyHealth
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+  /v1/graphify/jobs:
+    post:
+      summary: Graphify Build
+      operationId: graphifyBuild
+      parameters:
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BuildRequest'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BuildResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      security:
+      - bearerAuth: []
+  /v1/graphify/jobs/{job_id}:
+    get:
+      summary: Graphify Job Status
+      operationId: graphifyJobStatus
+      parameters:
+      - name: job_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Job Id
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JobInfo'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      security:
+      - bearerAuth: []
+    delete:
+      summary: Graphify Job Cancel
+      operationId: graphifyJobCancel
+      parameters:
+      - name: job_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Job Id
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JobInfo'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      security:
+      - bearerAuth: []
+  /v1/graphify/graphs/{graph_id}/update:
+    post:
+      summary: Graphify Update
+      operationId: graphifyUpdate
+      parameters:
+      - name: graph_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Graph Id
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateRequest'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BuildResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      security:
+      - bearerAuth: []
+  /v1/graphify/graphs/{graph_id}/stats:
+    get:
+      summary: Graphify Stats
+      operationId: graphifyStats
+      parameters:
+      - name: graph_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Graph Id
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatsResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      security:
+      - bearerAuth: []
+  /v1/graphify/graphs/{graph_id}/query:
+    post:
+      summary: Graphify Query
+      operationId: graphifyQuery
+      parameters:
+      - name: graph_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Graph Id
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QueryRequest'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QueryResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      security:
+      - bearerAuth: []
+  /v1/graphify/graphs/{graph_id}/path:
+    post:
+      summary: Graphify Path
+      operationId: graphifyPath
+      parameters:
+      - name: graph_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Graph Id
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PathRequest'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PathResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      security:
+      - bearerAuth: []
+  /v1/graphify/graphs/{graph_id}/explain:
+    post:
+      summary: Graphify Explain
+      operationId: graphifyExplain
+      parameters:
+      - name: graph_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Graph Id
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExplainRequest'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExplainResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      security:
+      - bearerAuth: []
+  /v1/graphify/graphs/{graph_id}/affected:
+    post:
+      summary: Graphify Affected
+      operationId: graphifyAffected
+      parameters:
+      - name: graph_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Graph Id
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AffectedRequest'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AffectedResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      security:
+      - bearerAuth: []
+  /v1/graphify/graphs/{graph_id}/export:
+    post:
+      summary: Graphify Export
+      operationId: graphifyExport
+      parameters:
+      - name: graph_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Graph Id
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExportRequest'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExportResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      security:
+      - bearerAuth: []
+  /v1/graphify/artifacts/{token}:
+    get:
+      summary: Graphify Artifact Download
+      operationId: graphifyArtifactDownload
+      parameters:
+      - name: token
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Token
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+components:
+  schemas:
+    AffectedRequest:
+      properties:
+        node_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Node Id
+        query:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Query
+        direction:
+          type: string
+          enum:
+          - out
+          - in
+          - both
+          title: Direction
+          default: both
+        max_depth:
+          type: integer
+          maximum: 6.0
+          minimum: 1.0
+          title: Max Depth
+          default: 2
+        limit:
+          type: integer
+          maximum: 200.0
+          minimum: 1.0
+          title: Limit
+          default: 50
+      type: object
+      title: AffectedRequest
+    AffectedResponse:
+      properties:
+        graph_id:
+          type: string
+          title: Graph Id
+        start_node:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
+          title: Start Node
+        affected:
+          items:
+            additionalProperties: true
+            type: object
+          type: array
+          title: Affected
+        edges:
+          items:
+            additionalProperties: true
+            type: object
+          type: array
+          title: Edges
+      type: object
+      required:
+      - graph_id
+      - start_node
+      - affected
+      - edges
+      title: AffectedResponse
+    BuildOptions:
+      properties:
+        graph_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Graph Id
+        include_patterns:
+          items:
+            type: string
+          type: array
+          title: Include Patterns
+        exclude_patterns:
+          items:
+            type: string
+          type: array
+          title: Exclude Patterns
+        max_files:
+          anyOf:
+          - type: integer
+            maximum: 100000.0
+            minimum: 1.0
+          - type: 'null'
+          title: Max Files
+        synchronous:
+          type: boolean
+          title: Synchronous
+          default: true
+        audit_label:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Audit Label
+      type: object
+      title: BuildOptions
+    BuildRequest:
+      properties:
+        source:
+          $ref: '#/components/schemas/GraphifySource'
+        options:
+          $ref: '#/components/schemas/BuildOptions'
+      type: object
+      required:
+      - source
+      title: BuildRequest
+    BuildResponse:
+      properties:
+        job_id:
+          type: string
+          title: Job Id
+        status:
+          type: string
+          enum:
+          - queued
+          - running
+          - succeeded
+          - failed
+          - cancelled
+          title: Status
+        graph_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Graph Id
+        message:
+          type: string
+          title: Message
+      type: object
+      required:
+      - job_id
+      - status
+      - message
+      title: BuildResponse
+    ExplainRequest:
+      properties:
+        node_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Node Id
+        query:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Query
+        depth:
+          type: integer
+          maximum: 3.0
+          minimum: 0.0
+          title: Depth
+          default: 1
+      type: object
+      title: ExplainRequest
+    ExplainResponse:
+      properties:
+        graph_id:
+          type: string
+          title: Graph Id
+        node:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
+          title: Node
+        neighbors:
+          items:
+            additionalProperties: true
+            type: object
+          type: array
+          title: Neighbors
+        evidence:
+          items:
+            type: string
+          type: array
+          title: Evidence
+        summary:
+          type: string
+          title: Summary
+      type: object
+      required:
+      - graph_id
+      - node
+      - summary
+      title: ExplainResponse
+    ExportRequest:
+      properties:
+        format:
+          type: string
+          enum:
+          - json
+          - report
+          - html
+          - zip
+          title: Format
+      type: object
+      required:
+      - format
+      title: ExportRequest
+    ExportResponse:
+      properties:
+        graph_id:
+          type: string
+          title: Graph Id
+        format:
+          type: string
+          enum:
+          - json
+          - report
+          - html
+          - zip
+          title: Format
+        artifact_token:
+          type: string
+          title: Artifact Token
+        artifact_url:
+          type: string
+          title: Artifact Url
+        expires_in_seconds:
+          type: integer
+          title: Expires In Seconds
+      type: object
+      required:
+      - graph_id
+      - format
+      - artifact_token
+      - artifact_url
+      - expires_in_seconds
+      title: ExportResponse
+    GraphifySource:
+      properties:
+        type:
+          type: string
+          enum:
+          - git
+          - zip_url
+          - inline_files
+          - local_path
+          title: Type
+        url:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Url
+        branch:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Branch
+        files:
+          anyOf:
+          - items:
+              $ref: '#/components/schemas/InlineFile'
+            type: array
+          - type: 'null'
+          title: Files
+        path:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Path
+      type: object
+      required:
+      - type
+      title: GraphifySource
+    HTTPValidationError:
+      properties:
+        detail:
+          items:
+            $ref: '#/components/schemas/ValidationError'
+          type: array
+          title: Detail
+      type: object
+      title: HTTPValidationError
+    InlineFile:
+      properties:
+        path:
+          type: string
+          maxLength: 500
+          minLength: 1
+          title: Path
+        content:
+          type: string
+          maxLength: 1000000
+          title: Content
+      type: object
+      required:
+      - path
+      - content
+      title: InlineFile
+    JobInfo:
+      properties:
+        job_id:
+          type: string
+          title: Job Id
+        status:
+          type: string
+          enum:
+          - queued
+          - running
+          - succeeded
+          - failed
+          - cancelled
+          title: Status
+        graph_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Graph Id
+        source_type:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Source Type
+        message:
+          type: string
+          title: Message
+          default: ''
+        created_at:
+          type: string
+          title: Created At
+        updated_at:
+          type: string
+          title: Updated At
+        error:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Error
+        stats:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
+          title: Stats
+      type: object
+      required:
+      - job_id
+      - status
+      - created_at
+      - updated_at
+      title: JobInfo
+    PathRequest:
+      properties:
+        source:
+          type: string
+          maxLength: 500
+          minLength: 1
+          title: Source
+        target:
+          type: string
+          maxLength: 500
+          minLength: 1
+          title: Target
+        max_depth:
+          type: integer
+          maximum: 20.0
+          minimum: 1.0
+          title: Max Depth
+          default: 6
+      type: object
+      required:
+      - source
+      - target
+      title: PathRequest
+    PathResponse:
+      properties:
+        graph_id:
+          type: string
+          title: Graph Id
+        found:
+          type: boolean
+          title: Found
+        path:
+          items:
+            additionalProperties: true
+            type: object
+          type: array
+          title: Path
+        edges:
+          items:
+            additionalProperties: true
+            type: object
+          type: array
+          title: Edges
+      type: object
+      required:
+      - graph_id
+      - found
+      title: PathResponse
+    QueryHit:
+      properties:
+        node_id:
+          type: string
+          title: Node Id
+        label:
+          type: string
+          title: Label
+        type:
+          type: string
+          title: Type
+        score:
+          type: number
+          title: Score
+        evidence:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Evidence
+        path:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Path
+      type: object
+      required:
+      - node_id
+      - label
+      - type
+      - score
+      title: QueryHit
+    QueryRequest:
+      properties:
+        query:
+          type: string
+          maxLength: 500
+          minLength: 1
+          title: Query
+        limit:
+          type: integer
+          maximum: 50.0
+          minimum: 1.0
+          title: Limit
+          default: 10
+        node_types:
+          items:
+            type: string
+          type: array
+          title: Node Types
+      type: object
+      required:
+      - query
+      title: QueryRequest
+    QueryResponse:
+      properties:
+        graph_id:
+          type: string
+          title: Graph Id
+        query:
+          type: string
+          title: Query
+        hits:
+          items:
+            $ref: '#/components/schemas/QueryHit'
+          type: array
+          title: Hits
+      type: object
+      required:
+      - graph_id
+      - query
+      - hits
+      title: QueryResponse
+    StatsResponse:
+      properties:
+        graph_id:
+          type: string
+          title: Graph Id
+        nodes:
+          type: integer
+          title: Nodes
+        edges:
+          type: integer
+          title: Edges
+        files:
+          type: integer
+          title: Files
+        symbols:
+          type: integer
+          title: Symbols
+        skipped_files:
+          type: integer
+          title: Skipped Files
+        generated_at:
+          type: string
+          title: Generated At
+        source:
+          additionalProperties: true
+          type: object
+          title: Source
+      type: object
+      required:
+      - graph_id
+      - nodes
+      - edges
+      - files
+      - symbols
+      - skipped_files
+      - generated_at
+      - source
+      title: StatsResponse
+    UpdateRequest:
+      properties:
+        source:
+          anyOf:
+          - $ref: '#/components/schemas/GraphifySource'
+          - type: 'null'
+        options:
+          $ref: '#/components/schemas/BuildOptions'
+      type: object
+      title: UpdateRequest
+    ValidationError:
+      properties:
+        loc:
+          items:
+            anyOf:
+            - type: string
+            - type: integer
+          type: array
+          title: Location
+        msg:
+          type: string
+          title: Message
+        type:
+          type: string
+          title: Error Type
+        input:
+          title: Input
+        ctx:
+          type: object
+          title: Context
+      type: object
+      required:
+      - loc
+      - msg
+      - type
+      title: ValidationError
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+servers:
+- url: https://YOUR-VERCEL-FACADE.vercel.app
+  description: Vercel facade or direct backend URL
+- url: http://localhost:8000
+  description: Local development

@@ -1,0 +1,20 @@
+steps:
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['build', '-t', '${_IMAGE}', '.']
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', '${_IMAGE}']
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: gcloud
+    args:
+      - run
+      - deploy
+      - '${_SERVICE}'
+      - '--image=${_IMAGE}'
+      - '--region=${_REGION}'
+      - '--platform=managed'
+      - '--allow-unauthenticated'
+      - '--set-env-vars=GRAPHIFY_AUTH_MODE=bearer,GRAPHIFY_DATA_DIR=/tmp/graphify,GRAPHIFY_WORK_DIR=/tmp/graphify/workspaces,GRAPHIFY_GRAPH_DIR=/tmp/graphify/graphs,GRAPHIFY_ARTIFACT_DIR=/tmp/graphify/artifacts,GRAPHIFY_AUDIT_LOG=/tmp/graphify/audit.jsonl'
+substitutions:
+  _SERVICE: graphify-backend
+  _REGION: asia-northeast3
+  _IMAGE: gcr.io/$PROJECT_ID/graphify-backend:latest

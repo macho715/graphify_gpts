@@ -1,0 +1,29 @@
+services:
+  graphify-backend:
+    build: .
+    container_name: graphify-backend
+    restart: unless-stopped
+    env_file: .env
+    ports:
+      - "8000:8000"
+    volumes:
+      - graphify_data:/data
+
+  caddy:
+    image: caddy:2-alpine
+    container_name: graphify-caddy
+    restart: unless-stopped
+    depends_on:
+      - graphify-backend
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+
+volumes:
+  graphify_data:
+  caddy_data:
+  caddy_config:

@@ -1,0 +1,43 @@
+# Fly.io configuration for the Graphify GPTS Backend.
+# Reference: https://fly.io/docs/reference/configuration/
+
+app = "hvdc-graphify-backend"
+primary_region = "icn"  # Seoul. Change to sin/ams/lhr/etc. if your users cluster elsewhere.
+
+[build]
+  dockerfile = "Dockerfile"
+
+[env]
+  GRAPHIFY_ALLOWED_HOSTS = "github.com,raw.githubusercontent.com,codeload.github.com,gist.githubusercontent.com"
+  GRAPHIFY_MAX_BUILD_SECONDS = "900"
+  GRAPHIFY_MAX_FILES = "20000"
+  GRAPHIFY_MAX_BYTES = "524288000"
+  GRAPHIFY_URL_TTL_SECONDS = "3600"
+  # Secrets — set via `fly secrets set` so they never land in source:
+  #   fly secrets set GRAPHIFY_API_KEYS="..." GRAPHIFY_ADMIN_KEY="..." GRAPHIFY_URL_SECRET="..."
+  # Placeholders below are invalid by design; uvicorn will refuse to start until
+  # real values are set, which is the desired fail-fast behavior.
+
+[http_service]
+  internal_port = 8000
+  force_https = true
+  auto_stop_machines = "stop"   # pause after 5min idle to control cost
+  auto_start_machines = true
+  min_machines_running = 0
+  processes = ["app"]
+
+  [http_service.concurrency]
+    type = "connections"
+    hard_limit = 50
+    soft_limit = 25
+
+  [[http_service.checks]]
+    interval = "30s"
+    timeout = "5s"
+    grace_period = "20s"
+    method = "GET"
+    path = "/health"
+
+[[mounts]]
+  source = "graphify_data"
+  destination = "/data"

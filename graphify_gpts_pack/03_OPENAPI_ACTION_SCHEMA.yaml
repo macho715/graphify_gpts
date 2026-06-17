@@ -1,0 +1,670 @@
+openapi: 3.1.0
+info:
+  title: Graphify OS Backend API
+  version: 1.0.0
+  summary: Build, update, and traverse a Graphify knowledge graph.
+  description: >
+    Use this schema to give a Custom GPT the ability to ingest a public repo,
+    archive, or document, then answer user questions via graph traversal.
+  contact:
+    name: Graphify OS Backend Operator
+    url: https://hvdc-graphify-backend.fly.dev/docs
+  license:
+    name: Internal Use Only
+    identifier: proprietary
+servers:
+  - url: https://hvdc-graphify-backend.fly.dev
+    description: Replace with the deployed Graphify backend HTTPS URL. Must be reachable from ChatGPT.
+security:
+  - bearerAuth: []
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: opaque
+      description: Static API key issued by the backend operator. Configure under Action → Authentication → API Key.
+  schemas:
+    Job:
+      type: object
+      description: Build/update job envelope. Poll /v1/graphify/jobs/{job_id} until status is succeeded, failed, or cancelled.
+      additionalProperties: false
+      properties:
+        job_id:
+          type: string
+          description: Opaque job identifier returned by the build or update endpoint.
+        status:
+          type: string
+          description: Current lifecycle state of the job.
+          enum:
+            - queued
+            - running
+            - succeeded
+            - failed
+            - cancelled
+        graph_id:
+          type: string
+          nullable: true
+          description: Populated once the build completes. Use this as the graph_id in query, path, explain, affected, and export calls.
+        message:
+          type: string
+          description: Human-readable progress or failure detail. Empty string when not applicable.
+        created_at:
+          type: string
+          format: date-time
+          description: UTC timestamp when the job was submitted.
+        updated_at:
+          type: string
+          format: date-time
+          description: UTC timestamp of the last status change.
+      required:
+        - job_id
+        - status
+    BuildRequest:
+      type: object
+      description: "Parameters for a graphifyBuild call. input_uri must be a public URL on the backend allowlist (default hosts: github.com, codeload.github.com, raw.githubusercontent.com, gist.githubusercontent.com)."
+      additionalProperties: false
+      properties:
+        input_uri:
+          type: string
+          description: Public GitHub repo, archive, or document URI accessible by the backend. Never pass private URLs.
+        branch:
+          type: string
+          nullable: true
+          description: Optional branch or ref. Defaults to the repository default branch.
+        mode:
+          type: string
+          description: 'standard = AST extraction only. deep = more INFERRED edges at lower confidence.'
+          enum:
+            - standard
+            - deep
+          default: standard
+        directed:
+          type: boolean
+          default: true
+          description: Preserve edge direction. Leave true unless an undirected graph is explicitly required.
+        no_viz:
+          type: boolean
+          default: false
+          description: Skip graph.html rendering. Use for large repos or CI builds.
+        options:
+          type: object
+          additionalProperties: false
+          description: Reserved for backend-specific options. Currently empty.
+          properties: {}
+      required:
+        - input_uri
+    QueryRequest:
+      type: object
+      description: Parameters for a graphifyQuery call. Performs BFS (default) or DFS traversal over the stored graph.
+      additionalProperties: false
+      properties:
+        question:
+          type: string
+          description: Natural-language question. The backend expands it using graph vocabulary before traversal.
+        mode:
+          type: string
+          description: 'bfs = breadth-first (default, best for "what is X"). dfs = depth-first (best for trace/flow/reach/path questions).'
+          enum:
+            - bfs
+            - dfs
+          default: bfs
+        token_budget:
+          type: integer
+          default: 2000
+          minimum: 200
+          maximum: 12000
+          description: Cap the response size in tokens.
+        context_filter:
+          type: array
+          items:
+            type: string
+          description: Optional list of edge-relation names to restrict traversal to (e.g. ['contains', 'calls']).
+      required:
+        - question
+    PathRequest:
+      type: object
+      description: Parameters for a graphifyPath call. Returns the shortest path between two concepts.
+      additionalProperties: false
+      properties:
+        source:
+          type: string
+          description: Source concept or node label.
+        target:
+          type: string
+          description: Target concept or node label.
+        max_hops:
+          type: integer
+          default: 8
+          minimum: 1
+          maximum: 32
+          description: Maximum path length. If the graph is dense, lower this to keep responses focused.
+      required:
+        - source
+        - target
+    ExplainRequest:
+      type: object
+      description: Parameters for a graphifyExplain call. Returns a plain-language explanation of a node and its neighborhood.
+      additionalProperties: false
+      properties:
+        label:
+          type: string
+          description: Node label or concept name to explain.
+        depth:
+          type: integer
+          default: 2
+          minimum: 1
+          maximum: 6
+          description: Neighborhood depth. Higher values return more context at the cost of token budget.
+      required:
+        - label
+    AffectedRequest:
+      type: object
+      description: Parameters for a graphifyAffected call. Reverse traversal to find the blast radius of changing a node.
+      additionalProperties: false
+      properties:
+        label:
+          type: string
+          description: Node label or concept name whose impact is being analyzed.
+        relation:
+          type: array
+          items:
+            type: string
+          description: Optional list of relation names to traverse in reverse. Empty = all relations.
+        depth:
+          type: integer
+          default: 2
+          minimum: 1
+          maximum: 6
+          description: Reverse-traversal depth. Use 1 for direct callers, 2-3 for transitive impact.
+      required:
+        - label
+    ExportRequest:
+      type: object
+      description: Parameters for a graphifyExport call. Returns a signed download URL that expires.
+      additionalProperties: false
+      properties:
+        format:
+          type: string
+          description: 'Output format. json = raw graph, html = interactive viz, svg = static image, graphml = NetworkX compatible, wiki = Markdown wiki, cypher = Neo4j import, callflow_html = call-edge HTML table.'
+          enum:
+            - json
+            - html
+            - svg
+            - graphml
+            - wiki
+            - cypher
+            - callflow_html
+      required:
+        - format
+    GraphStats:
+      type: object
+      description: Summary statistics for a stored graph.
+      additionalProperties: false
+      properties:
+        graph_id:
+          type: string
+          description: Graph identifier matching the one returned by the build job.
+        nodes:
+          type: integer
+          description: Total node count.
+        edges:
+          type: integer
+          description: Total edge count (graphify emits this under 'links' internally; the backend normalizes to 'edges').
+        communities:
+          type: integer
+          description: Number of detected communities. 0 if community detection has not run.
+        extracted_pct:
+          type: number
+          description: Percentage of edges with EXTRACTED confidence (0-100).
+        inferred_pct:
+          type: number
+          description: Percentage of edges with INFERRED confidence (0-100).
+        ambiguous_pct:
+          type: number
+          description: Percentage of edges with AMBIGUOUS confidence (0-100). High values signal the corpus needs deeper extraction.
+        top_nodes:
+          type: array
+          description: Up to 10 highest-degree nodes, useful as god-node candidates.
+          items:
+            type: object
+            additionalProperties: false
+            properties:
+              label:
+                type: string
+                description: Human-readable node label.
+              degree:
+                type: integer
+                description: Combined in-degree + out-degree.
+              source_file:
+                type: string
+                description: File the node was first extracted from.
+            required:
+              - label
+              - degree
+      required:
+        - graph_id
+        - nodes
+        - edges
+    TextResult:
+      type: object
+      description: Envelope returned by query, path, explain, and affected endpoints.
+      additionalProperties: false
+      properties:
+        graph_id:
+          type: string
+          description: Graph identifier the result was computed against.
+        result:
+          type: string
+          description: Plain-language answer or traversal output.
+        evidence:
+          type: array
+          description: Source citations extracted from the result text. Each entry is a (file, location, confidence) triple.
+          items:
+            type: object
+            additionalProperties: false
+            properties:
+              node:
+                type: string
+                description: Source file path the evidence was extracted from.
+              source_file:
+                type: string
+                description: Same as node; kept for clarity in the GPT response.
+              source_location:
+                type: string
+                description: Line, page, or cell reference (e.g. 'line 42'). Empty when not available.
+              confidence:
+                type: string
+                description: 'EXTRACTED = source-derived. INFERRED = heuristic. AMBIGUOUS = requires human review.'
+                enum:
+                  - EXTRACTED
+                  - INFERRED
+                  - AMBIGUOUS
+        warnings:
+          type: array
+          items:
+            type: string
+          description: Non-fatal warnings (e.g. partial match, no-path). Surface these to the user verbatim.
+      required:
+        - result
+    ExportResponse:
+      type: object
+      description: Returned by graphifyExport. The download_url is HMAC-signed and expires after a backend-defined TTL.
+      additionalProperties: false
+      properties:
+        graph_id:
+          type: string
+          description: Graph identifier the export was produced for.
+        format:
+          type: string
+          description: Echo of the requested format.
+        download_url:
+          type: string
+          format: uri
+          description: Fully-qualified URL that the GPT can hand back to the user. Hits /v1/graphify/artifacts/{token}.
+        expires_at:
+          type: string
+          format: date-time
+          description: UTC timestamp at which the signed URL stops working.
+      required:
+        - format
+        - download_url
+    ErrorResponse:
+      type: object
+      description: Standard error envelope for non-2xx responses.
+      additionalProperties: false
+      properties:
+        detail:
+          type: string
+          description: Human-readable error message. Safe to show the user.
+      required:
+        - detail
+paths:
+  /v1/graphify/jobs:
+    post:
+      operationId: graphifyBuild
+      summary: Start a Graphify build job from an accessible URI.
+      description: >
+        Submits a background job that fetches the URI, runs graphify extract,
+        and writes graph.json plus GRAPH_REPORT.md to the artifact store.
+        Returns a Job envelope; poll /v1/graphify/jobs/{job_id} until status
+        is 'succeeded' to obtain the graph_id. The backend is responsible for
+        redaction; do not pass secrets in the URI.
+      tags:
+        - jobs
+        - build
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BuildRequest'
+      responses:
+        '200':
+          description: Job accepted. status will be 'queued' or 'running'.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Job'
+        '401':
+          description: Missing or invalid bearer token.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation failure on the request body.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-openai-isConsequential: true
+  /v1/graphify/jobs/{job_id}:
+    parameters:
+      - name: job_id
+        in: path
+        required: true
+        description: Job identifier returned by graphifyBuild or graphifyUpdate.
+        schema:
+          type: string
+    get:
+      operationId: graphifyJobStatus
+      summary: Get the current status of a build or update job.
+      description: Polling endpoint. Returns the same Job envelope until the job reaches a terminal state.
+      tags:
+        - jobs
+      responses:
+        '200':
+          description: Current job state.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Job'
+        '404':
+          description: No job with that id exists on this backend.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /v1/graphify/graphs/{graph_id}/update:
+    parameters:
+      - name: graph_id
+        in: path
+        required: true
+        description: graph_id returned by a prior graphifyBuild.
+        schema:
+          type: string
+    post:
+      operationId: graphifyUpdate
+      summary: Incrementally update an existing graph.
+      description: Re-runs graphify update on the workspace behind the graph_id. Use this after the source has changed.
+      tags:
+        - graphs
+        - update
+      responses:
+        '200':
+          description: Update job accepted.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Job'
+        '404':
+          description: graph_id not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-openai-isConsequential: true
+  /v1/graphify/graphs/{graph_id}/stats:
+    parameters:
+      - name: graph_id
+        in: path
+        required: true
+        description: graph_id returned by a prior graphifyBuild.
+        schema:
+          type: string
+    get:
+      operationId: graphifyStats
+      summary: Get graph statistics and top nodes.
+      description: Cheap read; safe to call before any traversal to gauge corpus size and confidence distribution.
+      tags:
+        - graphs
+        - stats
+      responses:
+        '200':
+          description: Graph statistics.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GraphStats'
+        '404':
+          description: graph_id not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /v1/graphify/graphs/{graph_id}/query:
+    parameters:
+      - name: graph_id
+        in: path
+        required: true
+        description: graph_id returned by a prior graphifyBuild.
+        schema:
+          type: string
+    post:
+      operationId: graphifyQuery
+      summary: Query an existing graph using BFS or DFS traversal.
+      description: >
+        Use for open-ended questions. The backend expands the question with
+        graph vocabulary, then runs BFS (default) or DFS. Returned evidence
+        items are source citations; quote them back to the user.
+      tags:
+        - graphs
+        - query
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QueryRequest'
+      responses:
+        '200':
+          description: Query answer with evidence.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TextResult'
+        '404':
+          description: graph_id not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /v1/graphify/graphs/{graph_id}/path:
+    parameters:
+      - name: graph_id
+        in: path
+        required: true
+        description: graph_id returned by a prior graphifyBuild.
+        schema:
+          type: string
+    post:
+      operationId: graphifyPath
+      summary: Find the shortest path between two concepts.
+      description: Returns the relation chain between source and target. If no path exists, result is empty and the warnings list contains a 'no-path' note.
+      tags:
+        - graphs
+        - query
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PathRequest'
+      responses:
+        '200':
+          description: Path result with evidence.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TextResult'
+        '404':
+          description: graph_id not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /v1/graphify/graphs/{graph_id}/explain:
+    parameters:
+      - name: graph_id
+        in: path
+        required: true
+        description: graph_id returned by a prior graphifyBuild.
+        schema:
+          type: string
+    post:
+      operationId: graphifyExplain
+      summary: Explain a node and its neighborhood.
+      description: Returns a plain-language explanation of a label plus its incoming and outgoing edges.
+      tags:
+        - graphs
+        - query
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExplainRequest'
+      responses:
+        '200':
+          description: Node explanation.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TextResult'
+        '404':
+          description: graph_id not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /v1/graphify/graphs/{graph_id}/affected:
+    parameters:
+      - name: graph_id
+        in: path
+        required: true
+        description: graph_id returned by a prior graphifyBuild.
+        schema:
+          type: string
+    post:
+      operationId: graphifyAffected
+      summary: Find reverse-traversal impact / blast radius.
+      description: Use this to answer "what would change if I modified X?" depth=1 = direct callers, depth=2-3 = transitive impact.
+      tags:
+        - graphs
+        - impact
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AffectedRequest'
+      responses:
+        '200':
+          description: Affected nodes and files.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TextResult'
+        '404':
+          description: graph_id not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /v1/graphify/graphs/{graph_id}/export:
+    parameters:
+      - name: graph_id
+        in: path
+        required: true
+        description: graph_id returned by a prior graphifyBuild.
+        schema:
+          type: string
+    post:
+      operationId: graphifyExport
+      summary: Export a graph artifact.
+      description: >
+        Generates the requested format on demand and returns a signed
+        download URL. The URL is HMAC-signed and expires after the
+        backend-configured TTL (default 1 hour). Hand the URL to the user
+        so they can download the artifact directly.
+      tags:
+        - graphs
+        - export
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExportRequest'
+      responses:
+        '200':
+          description: Signed download URL and expiry.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExportResponse'
+        '404':
+          description: graph_id not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-openai-isConsequential: true
+  /v1/graphify/artifacts/{token}:
+    parameters:
+      - name: token
+        in: path
+        required: true
+        description: Signed token returned by graphifyExport.
+        schema:
+          type: string
+    get:
+      operationId: graphifyArtifactDownload
+      summary: Download a previously exported artifact via its signed token.
+      description: Public-from-the-user's-perspective — the URL is intentionally shareable but only valid for a short window.
+      tags:
+        - export
+      security: []
+      responses:
+        '200':
+          description: Artifact bytes. Content-Type depends on the format.
+          content:
+            application/json:
+              schema:
+                type: string
+                format: binary
+            text/html:
+              schema:
+                type: string
+            image/svg+xml:
+              schema:
+                type: string
+            application/xml:
+              schema:
+                type: string
+            text/plain:
+              schema:
+                type: string
+        '403':
+          description: Token invalid.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '410':
+          description: Token expired or artifact removed.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
