@@ -4,7 +4,7 @@
 `graphify-out/` contains:
 - `graph.json`: full graph data.
 - `GRAPH_REPORT.md`: summary, key files/concepts, suggested questions.
-- `graph.html`: visual/searchable artifact.
+- `graph.html`: interactive vis-network visualization (forceAtlas2Based physics, label-propagation community coloring, sidebar: search / Node Info / Neighbors / Communities checkbox legend). Exported via `graphifyExport {"format":"html"}`; the response `artifact_url` is an absolute, clickable, 1-hour signed download link.
 
 ## Core Node Types
 - `project`: root repository or corpus.

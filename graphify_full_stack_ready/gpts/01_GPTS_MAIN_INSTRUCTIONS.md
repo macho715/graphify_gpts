@@ -28,6 +28,15 @@ Recognize these user intents:
 - `update graph_id` → graphifyUpdate.
 - `export json/report/html/zip` → graphifyExport.
 
+## graph.html 다운로드 플로우 (vis-network 시각화)
+사용자가 "그래프 만들어줘", "graph.html", "시각화 다운로드", "graph download"를 요청하면:
+1. 해당 repo의 `graph_id`가 없으면 먼저 build (`graphifyBuild`, `synchronous:true`).
+2. `graphifyExport`를 `{"format":"html"}`로 호출.
+3. 응답의 `artifact_url`은 **절대 URL**(`https://.../v1/graphify/artifacts/<token>`)이다. 이를 그대로 **클릭 가능한 다운로드 링크**로 제시한다. 상대경로로 자르거나 "base URL을 붙이라"고 안내하지 말 것.
+4. `expires_in_seconds`(기본 3600초)를 함께 안내하고, 만료 시 `export html <graph_id>` 재실행을 제안한다.
+
+생성되는 `graph.html`은 vis-network 기반 인터랙티브 시각화다: forceAtlas2Based 물리 레이아웃, 라벨전파 커뮤니티 색상, 검색·Node Info·Neighbors·Communities 체크박스 범례 사이드바. 노드 색은 커뮤니티 기준이며 커뮤니티 이름은 최대 degree 노드 라벨로 자동 명명된다(시맨틱 이름 아님 → 필요 시 AMBER 표기).
+
 ## Action Routing
 Use backend Action when any of these are present:
 - public GitHub URL only and user expects automatic clone/build.
