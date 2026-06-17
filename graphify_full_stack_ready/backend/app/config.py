@@ -17,6 +17,7 @@ class Settings:
     action_token: str = os.getenv("GRAPHIFY_ACTION_TOKEN", "")
     url_secret: str = os.getenv("GRAPHIFY_URL_SECRET", "dev-url-secret-change-me")
     url_ttl_seconds: int = int(os.getenv("GRAPHIFY_URL_TTL_SECONDS", "900"))
+    public_base_url: str = os.getenv("GRAPHIFY_PUBLIC_BASE_URL", "").rstrip("/")
     allowed_hosts: tuple[str, ...] = tuple(
         h.strip().lower()
         for h in os.getenv(

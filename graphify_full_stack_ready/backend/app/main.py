@@ -147,15 +147,16 @@ def graphify_affected(graph_id: str, request: AffectedRequest):
 
 
 @app.post("/v1/graphify/graphs/{graph_id}/export", response_model=ExportResponse, operation_id="graphifyExport", dependencies=[Depends(require_auth)])
-def graphify_export(graph_id: str, request: ExportRequest):
+def graphify_export(graph_id: str, request: ExportRequest, http_request: Request):
     _load_or_404(graph_id)
     file_path = create_export(graph_id, request.format)
     token = sign_artifact(graph_id, request.format, file_path)
+    base = settings.public_base_url or str(http_request.base_url).rstrip("/")
     return ExportResponse(
         graph_id=graph_id,
         format=request.format,
         artifact_token=token,
-        artifact_url=f"/v1/graphify/artifacts/{token}",
+        artifact_url=f"{base}/v1/graphify/artifacts/{token}",
         expires_in_seconds=settings.url_ttl_seconds,
     )
 
