@@ -16,9 +16,11 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
-COPY requirements.txt /app/requirements.txt
+# Build context is the repo root (Railway monorepo). Reference files via
+# their repo-relative path; the active backend ships at this fixed location.
+COPY graphify_full_stack_ready/backend/requirements.txt /app/requirements.txt
 RUN pip install --no-cache-dir -r /app/requirements.txt
-COPY app /app/app
+COPY graphify_full_stack_ready/backend/app /app/app
 RUN mkdir -p /data/workspaces /data/graphs /data/artifacts
 EXPOSE 8000
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 CMD curl -fsS http://127.0.0.1:8000/health || exit 1
