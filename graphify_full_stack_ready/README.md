@@ -43,15 +43,19 @@ cp .env.example .env
 bash scripts/deploy_docker_caddy.sh
 ```
 
-## Railway 배포
+## Railway 배포 (현재 라이브 — GitHub 자동 배포)
+
+현재 운영: `main` 브랜치 push → 루트 `railway.toml`이 `graphify_full_stack_ready/backend/Dockerfile`로 자동 빌드. 라이브: `https://graphifygpts-production.up.railway.app` (BEARER).
 
 ```bash
-cd backend
-railway login
-railway link
-railway variables set GRAPHIFY_AUTH_MODE=bearer GRAPHIFY_ACTION_TOKEN=<token> GRAPHIFY_URL_SECRET=<secret>
-bash scripts/deploy_railway.sh
+git push origin main                                          # push = deploy
+RAILWAY_TOKEN=<project-token> bash scripts/railway_setup.sh   # 환경 변수 설정 (서비스 레벨)
 ```
+
+> ⚠️ 아래 CLI 방식은 레거시 — 인터랙티브 로그인이 필요하고 GitHub 자동배포와 충돌 가능:
+> ```bash
+> # cd backend && railway login && railway link && bash scripts/deploy_railway.sh
+> ```
 
 ## Vercel Facade 배포
 

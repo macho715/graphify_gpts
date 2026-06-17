@@ -2,6 +2,7 @@
 
 **활성 패키지**: [`graphify_full_stack_ready/`](graphify_full_stack_ready/) (35/35 PASS 검증)
 **deprecated**: [`graphify_backend/`](graphify_backend/) — DEPRECATED.md 참조
+**라이브 배포**: Railway `https://graphifygpts-production.up.railway.app` (BEARER, GitHub `main` 자동 배포) — 2026-06-17
 
 ---
 
@@ -34,8 +35,8 @@ bash scripts/run_tests_5x.sh
 | 4 | Actions → Schema (운영) | `gpts/03_OPENAPI_ACTION_SCHEMA_BEARER.yaml` (Auth=Bearer) |
 
 servers.url은 배포 후 변경:
-- Railway: `https://<app>.up.railway.app`
-- Fly.io: `https://hvdc-graphify-backend.fly.dev` (legacy 설정)
+- **Railway (현재 라이브, BEARER 스키마에 적용 완료)**: `https://graphifygpts-production.up.railway.app`
+- Fly.io: `https://hvdc-graphify-backend.fly.dev` (legacy 설정, 미사용)
 - Vercel facade: facade URL
 - Docker+Caddy: `https://<domain>`
 
@@ -43,16 +44,20 @@ servers.url은 배포 후 변경:
 
 ## 3. 배포 옵션 4종
 
-### 3.1 Railway (PoC 추천)
+### 3.1 Railway (현재 라이브 — GitHub 자동 배포)
+현재 운영 방식: **GitHub 리포지토리 연결 자동 배포**. `main` 브랜치에 push하면 루트 `railway.toml`이 `graphify_full_stack_ready/backend/Dockerfile`로 빌드한다. 라이브: `https://graphifygpts-production.up.railway.app` (BEARER).
 ```bash
-cd graphify_full_stack_ready/backend
-railway login
-railway link
-railway variables set GRAPHIFY_AUTH_MODE=bearer \
-  GRAPHIFY_ACTION_TOKEN=$(python -c "import secrets; print(secrets.token_urlsafe(32))") \
-  GRAPHIFY_URL_SECRET=$(python -c "import secrets; print(secrets.token_urlsafe(32))")
-bash scripts/deploy_railway.sh
+# 1) 코드 배포 — push가 곧 배포
+git push origin main
+
+# 2) 환경 변수 설정 (Railway 프로젝트 토큰 사용; railway.app/account/tokens)
+RAILWAY_TOKEN=<project-token> bash scripts/railway_setup.sh
 ```
+
+> ⚠️ 아래 CLI 방식(`railway login`/`link`/`up`)은 **레거시**다 — 인터랙티브 로그인이 필요하고 GitHub 자동배포와 충돌할 수 있어 권장하지 않는다.
+> ```bash
+> # (legacy) cd graphify_full_stack_ready/backend && railway login && railway link && bash scripts/deploy_railway.sh
+> ```
 
 ### 3.2 Docker + Caddy (HVDC/NDA — 추천)
 ```bash
@@ -65,7 +70,7 @@ bash scripts/deploy_docker_caddy.sh
 ```bash
 cd graphify_full_stack_ready/vercel_facade
 vercel login
-vercel env add GRAPHIFY_BACKEND_URL production   # e.g. https://hvdc-graphify-backend.railway.app
+vercel env add GRAPHIFY_BACKEND_URL production   # 라이브 백엔드: https://graphifygpts-production.up.railway.app
 vercel env add GRAPHIFY_BACKEND_TOKEN production # BEARER 모드일 때
 bash deploy_vercel.sh
 ```
@@ -107,6 +112,9 @@ stats / query "what is the structure" / explain "README" / path "README" "index.
 |---|---|
 | 401 Unauthorized | `GRAPHIFY_AUTH_MODE=none`인데 GPT Action schema가 `BEARER`를 쓰는 경우. NONE.yaml로 교체. |
 | 422 Validation Error | `input_uri`가 allowlist 외 호스트. github.com / codeload.github.com / raw.githubusercontent.com / gist만 허용. |
+| 502 Application failed to respond (Railway) | uvicorn이 `$PORT`에 바인딩해야 함(하드코딩 8000 금지). Dockerfile CMD `${PORT:-8000}` + 서비스 도메인 targetPort 일치 필요 (commit 02e5159). |
+| export `artifact_url`이 상대경로 | `GRAPHIFY_PUBLIC_BASE_URL` 미설정. 서비스 변수에 `https://graphifygpts-production.up.railway.app` 설정 시 절대 URL 반환. |
+| Railway 변수 설정해도 미반영 | `railway_setup.sh`가 `serviceId` 없이 upsert하면 환경 공유변수로만 생성됨 → 서비스 레벨로 설정해야 런타임 주입됨. |
 | 5x smoke test 경로 에러 (`\\tmp\\tmp.XXX\\round_1.md` 못 찾음) | 테스트 자체는 35/35 PASS. 통합 리포트 생성 단계의 Windows 경로 정규화 버그. 무시 가능. |
 | graphify CLI 의존성 오류 | 이 패키지는 graphify CLI를 사용하지 않음 (자체 builder 내장). pip install fastapi만 필요. |
 
@@ -126,3 +134,4 @@ stats / query "what is the structure" / explain "README" / path "README" "index.
 
 **Owner**: HVDC SCM Team
 **Last verified**: 2026-06-17 (5x smoke test, 35/35 PASS)
+**Live**: 2026-06-17 — Railway 백엔드 라이브(`graphifygpts-production.up.railway.app`), 절대 `artifact_url` + vis-network `graph.html` 적용

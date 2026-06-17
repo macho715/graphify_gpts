@@ -40,7 +40,7 @@ Four options documented in [`INTEGRATION.md`](INTEGRATION.md):
 
 | Option | Best for |
 |---|---|
-| Railway | Public repo PoC, fastest |
+| Railway | **현재 라이브 호스트** — GitHub `main` 자동 배포 (`graphifygpts-production.up.railway.app`) |
 | Vercel facade + Railway/Cloud Run | ChatGPT-friendly HTTPS endpoint |
 | Docker + Caddy | HVDC/NDA on private infra |
 | Cloud Run | GCP-native |
@@ -63,7 +63,7 @@ Four options documented in [`INTEGRATION.md`](INTEGRATION.md):
 - `POST /v1/graphify/graphs/{graph_id}/path` — shortest path (`graphifyPath`)
 - `POST /v1/graphify/graphs/{graph_id}/explain` — node explanation (`graphifyExplain`)
 - `POST /v1/graphify/graphs/{graph_id}/affected` — blast radius (`graphifyAffected`)
-- `POST /v1/graphify/graphs/{graph_id}/export` — signed artifact URL (`graphifyExport`)
+- `POST /v1/graphify/graphs/{graph_id}/export` — **absolute** signed artifact URL (`graphifyExport`); `format:"html"`는 인터랙티브 vis-network graph.html 반환
 - `GET /v1/graphify/artifacts/{token}` — public download (`graphifyArtifactDownload`)
 
 Two auth modes:
@@ -110,6 +110,7 @@ Two auth modes:
 
 - Local smoke test: 5 rounds × 7 checks = **35/35 PASS** (2026-06-17, tiny_repo fixture)
 - Live test: `https://github.com/macho715/graphify_gpts.git` (empty repo) — full pipeline ran end-to-end on a real GitHub URL (build → stats → path → explain → affected → export → signed download)
+- Live backend (2026-06-17): `https://graphifygpts-production.up.railway.app` — bearer 인증, `invoice_sct` repo 빌드(8,488 nodes / 11,583 edges) → `export html` 절대 URL 다운로드 검증 (vis-network 시각화)
 
 ## License
 
